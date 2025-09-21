@@ -1,6 +1,7 @@
 import asyncio
 from typing import Optional
 from contextlib import AsyncExitStack
+import os
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -8,12 +9,16 @@ from mcp.client.stdio import stdio_client
 from anthropic import Anthropic
 
 
-class MCPClient:
+class MCPClientAnthropic:
     def __init__(self):
         # Initialize session and client objects
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
-        self.anthropic = Anthropic()
+
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY environment variable is required")
+        self.anthropic = Anthropic(api_key=api_key)
 
     async def connect_to_server(self, server_script_path: str):
         """Connect to an MCP server
@@ -137,7 +142,7 @@ class MCPClient:
 
 
 async def client_main(server_script_path: str):
-    client = MCPClient()
+    client = MCPClientAnthropic()
     try:
         await client.connect_to_server(server_script_path)
         await client.chat_loop()
